@@ -1,0 +1,453 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>YOUR GYM — 01 In-session timeline</title>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+<!--
+  YOUR GYM — SCREEN 01: IN-SESSION TIMELINE
+  Frame: 393 x 852. Static. No JS.
+
+  TIME SCALE: 0.5px = 1 second (30px = 1 minute). No exceptions.
+  Blocks butt directly against each other — zero gap — because a gap
+  would represent time that did not happen.
+
+  Layout budget (sums to 852):
+    header      64
+    upcoming   158   (18 + 60 + 20 + 60)
+    current    308
+    completed  322   (clipped; real stack is 395)
+-->
+
+<style>
+  html, body {
+    margin: 0;
+    padding: 0;
+    border: 0;
+    width: 393px;
+    height: 852px;
+    overflow: hidden;
+  }
+
+  body {
+    background: #0B0C0E;
+    color: #F2F0ED;
+    font-family: 'Archivo', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* ───────────── HEADER ───────────── */
+
+  .session-header {
+    width: 393px;
+    height: 64px;
+    flex: 0 0 64px;
+    padding: 0 20px;
+    box-sizing: border-box;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .session-id {
+    display: flex;
+    flex-direction: column;
+  }
+  .session-name {
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 2.1px;
+    text-transform: uppercase;
+    line-height: 15px;
+    color: #F2F0ED;
+  }
+  .session-elapsed {
+    font-family: 'IBM Plex Mono', Menlo, Consolas, monospace;
+    font-size: 10px;
+    font-weight: 400;
+    letter-spacing: 0.6px;
+    line-height: 13px;
+    margin-top: 5px;
+    color: #767B83;
+  }
+  .session-remaining {
+    width: 96px;
+    font-family: 'IBM Plex Mono', Menlo, Consolas, monospace;
+    font-size: 10px;
+    font-weight: 400;
+    letter-spacing: 0.6px;
+    line-height: 15px;
+    text-align: right;
+    color: #767B83;
+  }
+  .remaining-figure {
+    color: #F2F0ED;
+  }
+
+  /* ───────────── BLOCK ROW PRIMITIVE ─────────────
+     Row height IS the block's real duration.        */
+
+  .block-row {
+    width: 393px;
+    flex: 0 0 auto;
+    display: flex;
+    align-items: center;
+  }
+  .block-label {
+    width: 132px;
+    flex: 0 0 132px;
+    padding-right: 16px;
+    box-sizing: border-box;
+    text-align: right;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+  }
+  .label-name {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.9px;
+    text-transform: uppercase;
+    line-height: 13px;
+    white-space: nowrap;
+    color: #F2F0ED;
+  }
+  .label-meta {
+    font-family: 'IBM Plex Mono', Menlo, Consolas, monospace;
+    font-size: 10px;
+    font-weight: 400;
+    letter-spacing: 0.2px;
+    line-height: 12px;
+    margin-top: 2px;
+    white-space: nowrap;
+    color: #767B83;
+  }
+  .block-fill {
+    flex: 1 1 auto;
+    align-self: stretch;
+  }
+
+  .fill-bench    { background: #C0402A; }
+  .fill-pushdown { background: #D6A32E; }
+  .fill-lateral  { background: #7F9142; }
+  .fill-curl     { background: #7C6BA8; }
+  .fill-rest     { background: #3E6E7E; }
+
+  /* ───────────── UPCOMING (planned, dimmed) ───────────── */
+
+  .upcoming {
+    width: 393px;
+    height: 158px;
+    flex: 0 0 158px;
+  }
+  .upcoming .block-fill { opacity: 0.26; }
+  .upcoming .label-name { color: #494D54; }
+  .upcoming .label-meta { color: #494D54; }
+
+  /* ───────────── CURRENT BLOCK ─────────────
+     Now has no duration yet, so it has no scale.
+     It interrupts the wall.                      */
+
+  .current {
+    width: 393px;
+    height: 308px;
+    flex: 0 0 308px;
+    box-sizing: border-box;
+    background: #15171B;
+    padding: 18px 20px 20px 20px;
+    display: flex;
+    flex-direction: column;
+  }
+  .current-head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+  }
+  .current-name {
+    font-size: 21px;
+    font-weight: 700;
+    letter-spacing: 0.4px;
+    text-transform: uppercase;
+    line-height: 24px;
+    color: #F2F0ED;
+  }
+  .current-sub {
+    font-family: 'IBM Plex Mono', Menlo, Consolas, monospace;
+    font-size: 10px;
+    font-weight: 400;
+    letter-spacing: 0.6px;
+    line-height: 13px;
+    margin-top: 6px;
+    color: #767B83;
+  }
+
+  /* rest light — a box, not an alarm */
+  .rest-light {
+    display: flex;
+    align-items: center;
+    padding-top: 5px;
+  }
+  .light-box {
+    width: 12px;
+    height: 12px;
+    flex: 0 0 12px;
+    background: #57C08B;
+  }
+  .light-text {
+    font-family: 'IBM Plex Mono', Menlo, Consolas, monospace;
+    font-size: 10px;
+    font-weight: 500;
+    letter-spacing: 1.2px;
+    line-height: 12px;
+    text-transform: uppercase;
+    margin-left: 8px;
+    color: #57C08B;
+  }
+
+  /* scrollable target — ghosted neighbours are the only affordance */
+  .target {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-top: 16px;
+    margin-bottom: 18px;
+  }
+  .dial {
+    width: 118px;
+    flex: 0 0 118px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+  .dial-ghost {
+    font-size: 20px;
+    font-weight: 500;
+    line-height: 24px;
+    font-variant-numeric: tabular-nums;
+    color: #F2F0ED;
+    opacity: 0.16;
+  }
+  .dial-value {
+    font-size: 56px;
+    font-weight: 700;
+    line-height: 60px;
+    letter-spacing: -1.6px;
+    font-variant-numeric: tabular-nums;
+    color: #F2F0ED;
+  }
+  .unit {
+    width: 44px;
+    font-family: 'IBM Plex Mono', Menlo, Consolas, monospace;
+    font-size: 10px;
+    font-weight: 400;
+    letter-spacing: 1.6px;
+    line-height: 13px;
+    text-transform: uppercase;
+    text-align: center;
+    margin-top: 6px;
+    color: #767B83;
+  }
+  .conjunction {
+    width: 40px;
+    font-family: 'IBM Plex Mono', Menlo, Consolas, monospace;
+    font-size: 11px;
+    font-weight: 400;
+    letter-spacing: 1.1px;
+    line-height: 13px;
+    text-align: center;
+    padding-bottom: 4px;
+    color: #494D54;
+  }
+
+  .confirm {
+    width: 353px;
+    height: 58px;
+    flex: 0 0 58px;
+    background: #D6A32E;
+    color: #0B0C0E;
+    font-size: 15px;
+    font-weight: 700;
+    letter-spacing: 2.7px;
+    text-transform: uppercase;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  /* ───────────── COMPLETED (real scale, newest first) ───────────── */
+
+  .completed {
+    width: 393px;
+    height: 322px;
+    flex: 0 0 322px;
+    overflow: hidden;
+  }
+</style>
+</head>
+<body>
+
+  <!-- ════ HEADER ════ -->
+  <div class="session-header">
+    <div class="session-id">
+      <div class="session-name">Push</div>
+      <div class="session-elapsed">42:07 elapsed</div>
+    </div>
+    <div class="session-remaining"><span class="remaining-figure">38 min</span> active left</div>
+  </div>
+
+  <!-- ════ UPCOMING ════ -->
+  <div class="upcoming">
+
+    <!-- BICEP CURL · 0:36 planned = 18px -->
+    <div class="block-row" style="height:18px">
+      <div class="block-label">
+        <div class="label-name">Bicep curl</div>
+        <div class="label-meta">12 kg &times; 8</div>
+      </div>
+      <div class="block-fill fill-curl"></div>
+    </div>
+
+    <!-- REST · 2:00 planned = 60px -->
+    <div class="block-row" style="height:60px">
+      <div class="block-label">
+        <div class="label-name">Rest</div>
+        <div class="label-meta">2:00</div>
+      </div>
+      <div class="block-fill fill-rest"></div>
+    </div>
+
+    <!-- LATERAL RAISE · 0:40 planned = 20px -->
+    <div class="block-row" style="height:20px">
+      <div class="block-label">
+        <div class="label-name">Lateral raise</div>
+        <div class="label-meta">8 kg &times; 12</div>
+      </div>
+      <div class="block-fill fill-lateral"></div>
+    </div>
+
+    <!-- REST · 2:00 planned = 60px -->
+    <div class="block-row" style="height:60px">
+      <div class="block-label">
+        <div class="label-name">Rest</div>
+        <div class="label-meta">2:00</div>
+      </div>
+      <div class="block-fill fill-rest"></div>
+    </div>
+
+  </div>
+
+  <!-- ════ CURRENT ════ -->
+  <div class="current">
+
+    <div class="current-head">
+      <div class="current-id">
+        <div class="current-name">Pushdowns</div>
+        <div class="current-sub">Set 3 of 3</div>
+      </div>
+      <div class="rest-light">
+        <div class="light-box"></div>
+        <div class="light-text">Rested</div>
+      </div>
+    </div>
+
+    <div class="target">
+      <div class="dial">
+        <div class="dial-ghost">8</div>
+        <div class="dial-value">10</div>
+        <div class="dial-ghost">12</div>
+        <div class="unit">kg</div>
+      </div>
+      <div class="conjunction">for</div>
+      <div class="dial">
+        <div class="dial-ghost">10</div>
+        <div class="dial-value">8</div>
+        <div class="dial-ghost">6</div>
+        <div class="unit">reps</div>
+      </div>
+    </div>
+
+    <div class="confirm">Did it</div>
+
+  </div>
+
+  <!-- ════ COMPLETED ════ -->
+  <div class="completed">
+
+    <!-- REST 2:14 = 134s = 67px -->
+    <div class="block-row" style="height:67px">
+      <div class="block-label">
+        <div class="label-name">Rest</div>
+        <div class="label-meta">2:14</div>
+      </div>
+      <div class="block-fill fill-rest"></div>
+    </div>
+
+    <!-- PUSHDOWNS 0:36 = 36s = 18px -->
+    <div class="block-row" style="height:18px">
+      <div class="block-label">
+        <div class="label-name">Pushdowns</div>
+        <div class="label-meta">10 kg &times; 8</div>
+      </div>
+      <div class="block-fill fill-pushdown"></div>
+    </div>
+
+    <!-- REST 1:30 = 90s = 45px -->
+    <div class="block-row" style="height:45px">
+      <div class="block-label">
+        <div class="label-name">Rest</div>
+        <div class="label-meta">1:30</div>
+      </div>
+      <div class="block-fill fill-rest"></div>
+    </div>
+
+    <!-- PUSHDOWNS 0:34 = 34s = 17px -->
+    <div class="block-row" style="height:17px">
+      <div class="block-label">
+        <div class="label-name">Pushdowns</div>
+        <div class="label-meta">10 kg &times; 9</div>
+      </div>
+      <div class="block-fill fill-pushdown"></div>
+    </div>
+
+    <!-- REST 4:02 = 242s = 121px -->
+    <div class="block-row" style="height:121px">
+      <div class="block-label">
+        <div class="label-name">Rest</div>
+        <div class="label-meta">4:02</div>
+      </div>
+      <div class="block-fill fill-rest"></div>
+    </div>
+
+    <!-- BENCH 0:44 = 44s = 22px -->
+    <div class="block-row" style="height:22px">
+      <div class="block-label">
+        <div class="label-name">Bench</div>
+        <div class="label-meta">60 kg &times; 6</div>
+      </div>
+      <div class="block-fill fill-bench"></div>
+    </div>
+
+    <!-- REST 2:48 = 168s = 84px -->
+    <div class="block-row" style="height:84px">
+      <div class="block-label">
+        <div class="label-name">Rest</div>
+        <div class="label-meta">2:48</div>
+      </div>
+      <div class="block-fill fill-rest"></div>
+    </div>
+
+    <!-- BENCH 0:41 = 41s = 21px (clipped by frame) -->
+    <div class="block-row" style="height:21px">
+      <div class="block-label">
+        <div class="label-name">Bench</div>
+        <div class="label-meta">60 kg &times; 8</div>
+      </div>
+      <div class="block-fill fill-bench"></div>
+    </div>
+
+  </div>
+
+</body>
+</html>
